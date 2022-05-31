@@ -30,10 +30,9 @@ class LoginAPIView(APIView):
         username = request.data.get("username")
         password = request.data.get("password")
         user = authenticate(request, username=username, password=password)
-        token = ""
-        if user:
-            token, created = Token.objects.get_or_create(user=user)
-        print(user, token)
+        if not user:
+            return Response({"detail":"Not Authenticated"}, status=401)            
+        token, created = Token.objects.get_or_create(user=user)
 
         return Response({
             "token": token.key,
