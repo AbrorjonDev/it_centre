@@ -25,6 +25,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("auth/", include("apps.users.urls")),
+    path("groups/", include("apps.payments.urls")),
     path('openapi', get_schema_view(
         title="Learning centre api",
         description="API for statistics app",

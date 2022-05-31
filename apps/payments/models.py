@@ -17,7 +17,7 @@ class Group(BaseModel):
     class Meta:
         verbose_name = "Group"
         verbose_name_plural = "Groups"
-
+        ordering = ("-id", )
     def __str__(self):
         return self.name
     

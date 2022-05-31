@@ -7,7 +7,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User 
-        fields = ("id", "username", "password", "is_admin", "is_director")
+        fields = ("id", "username", "first_name", "last_name", "password", "is_admin", "is_director")
 
         extra_kwargs = {
             "password":{"write_only":True},
@@ -17,12 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
         if self.context["request"].user.is_superuser:
             user = User.objects.create(**attrs, is_admin=False)
         else:
-            user = User(
-                username=attrs["username"], 
-                is_admin=True,
-                is_active=True,
-                is_staff=True
-                )
+            user = User(**attrs, is_admin=True, is_director=False)
         user.set_password(attrs.get("password"))
         user.save()
         return user
