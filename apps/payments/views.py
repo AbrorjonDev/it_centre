@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import Q
 
 #local imports 
 from .models import Group, GroupPayments
@@ -25,11 +26,10 @@ class GroupAPIView(APIView):
     serializer_class = GroupSerializer
 
     def get_queryset(self, user=None):
-        queryset = Group.objects.filter(created_by=user)
         if user and user.is_director:
-            queryset += Group.objects.filter(created_by__created_by=user)
+            queryset = Group.objects.filter(Q(created_by__created_by=user)| Q(created_by=user))
         elif user and user.is_admin:
-            queryset += Group.objects.filter(created_by=user.created_by)
+            queryset = Group.objects.filter(Q(created_by=user.created_by)|Q(created_by=user))
         elif user and user.is_superuser:
             queryset = Group.objects.all()
         return queryset.all()

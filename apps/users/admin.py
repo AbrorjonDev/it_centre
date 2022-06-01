@@ -19,6 +19,6 @@ class UserAdmin(DjangoUserAdmin):
             "fields":("is_superuser", "is_staff", "is_active", "is_director", "is_admin")
         }),
         ("IMPORTANT", {
-            "fields":(("date_joined", "last_login"), )
+            "fields":(("date_joined", "last_login"), "created_by")
         })
     )
