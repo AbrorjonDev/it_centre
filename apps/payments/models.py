@@ -4,15 +4,19 @@ from django.contrib.auth import get_user_model
 
 #local imports
 from base_model.models import BaseModel
-
+ 
 User = get_user_model()
 
-
+ 
 class Group(BaseModel):
     name = models.CharField(max_length=100)
     cost = models.IntegerField(null=True, blank=True)
     key = models.CharField(max_length=100, null=True, blank=True)
     lessons_count = models.IntegerField(null=True, blank=True)
+    month = models.IntegerField(null=True, blank=True)
+    year = models.IntegerField(null=True, blank=True)
+    paid = models.IntegerField(null=True, blank=True)
+    must_paid = models.IntegerField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Group"
@@ -40,3 +44,15 @@ class GroupPayments(BaseModel):
 
     def __str__(self):
         return self.full_name
+
+
+class MonthlyPayments(BaseModel):
+    month = models.IntegerField(null=True, blank=True)
+    year = models.IntegerField(null=True, blank=True)
+    paid = models.IntegerField(null=True, blank=True)
+    must_paid = models.IntegerField(null=True, blank=True)
+    pupils = models.IntegerField(null=True, blank=True, default=0)
+
+
+    def __str__(self):
+        return self.created_by.username

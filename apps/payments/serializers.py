@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 #local imports
-from .models import Group, GroupPayments
+from .models import Group, GroupPayments, MonthlyPayments
 from apps.users.serializers import UserSerializer
 
 
@@ -16,7 +16,6 @@ class GroupPaymentsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class GroupSerializer(serializers.ModelSerializer):
-    payments = GroupPaymentsSerializer(required=False, read_only=True, many=True)
     created_by = UserSerializer(many=False, required=False, read_only=True)
     modified_by = UserSerializer(many=False, required=False, read_only=True)
 
@@ -28,7 +27,10 @@ class GroupSerializer(serializers.ModelSerializer):
             "cost", 
             "key", 
             "lessons_count", 
-            "payments", 
+            "paid",
+            "must_paid",
+            "month",
+            "year",
             "created_by", 
             "modified_by",
             "date_created",
@@ -36,12 +38,29 @@ class GroupSerializer(serializers.ModelSerializer):
             )
 
     def create(self, attrs):
-        group = Group.objects.create(**attrs, created_by=self.context["request"].user)
+        user = self.context["request"].user
+        if not user.is_director:
+            user = user.created_by 
+        if "month" not in attrs.keys():
+            attrs["month"] = timezone.now().month
+        if "year" not in attrs.keys():
+            attrs["year"] = timezone.now().year 
+        group = Group.objects.create(**attrs, created_by=user)
         return group
 
+
+class GroupDetailSerializer(serializers.ModelSerializer):
+    payments = GroupPaymentsSerializer(required=False, read_only=True, many=True)
+    created_by = UserSerializer(many=False, required=False, read_only=True)
+    modified_by = UserSerializer(many=False, required=False, read_only=True)
+    class Meta:
+        model = Group
+        fields = "__all__"
     def update(self, instance, attrs):
         instance.name = attrs.get("name", instance.name)
         instance.cost = attrs.get("cost", instance.cost)
+        instance.month = attrs.get("month", instance.month)
+        instance.year = attrs.get("year", instance.year)
         instance.key = attrs.get("key", instance.key)
         instance.lessons_count = attrs.get("lessons_count", instance.lessons_count)
         instance.modified_by = self.context["request"].user
@@ -53,6 +72,7 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroupPayments
         fields = (
+            "id",
             "full_name",
             "payment_amount",
             "paid_admin",
@@ -69,6 +89,12 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
                 return payment
         except:
             pass
+        #Todo: admin cannot add paid_director status, and another point.
+        if "paid_admin" in attrs.keys() and not self.context["request"].user.is_admin:
+            attrs.pop("paid_admin")
+        if "paid_director" in attrs.keys() and not self.context["request"].user.is_director:
+            attrs.pop("paid_director")
+
         student = GroupPayments.objects.create(**attrs, created_by=self.context["request"].user)
         student.save()
         return student
@@ -85,3 +111,9 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
         instance.date_modified = timezone.now()
         instance.save()
         return instance
+
+
+class MonthlyPaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MonthlyPayments
+        fields = "__all__"

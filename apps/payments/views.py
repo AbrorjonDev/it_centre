@@ -2,42 +2,70 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
+from django.utils import timezone
 
+from apps.payments.admin import MonthlyPaymentAdmin
 #local imports 
-from .models import Group, GroupPayments
+from .models import Group, GroupPayments, MonthlyPayments
 from .serializers import (
     GroupPaymentsPostSerializer,
+    GroupDetailSerializer,
     GroupPaymentsSerializer, 
-    GroupSerializer
+    GroupSerializer,
+    MonthlyPaymentSerializer
     )
-
+ 
 class GroupAPIView(APIView):
     """
     Admins and directors create new groups, and get all datas about their groups.
     if you are a superuser, you can get all groups infos in db.
 
+    in GET:
+        in params:
+            month: int
+            year: int
     in POST:
         name: str(100),
         cost: int, (e.g. 400000) (Optional)
         key: str (Optional field),
         lessons_count: int (Optional for now),
+        month: int (Optional),
+        year: int (Optional)
     """
  
     serializer_class = GroupSerializer
 
-    def get_queryset(self, user=None):
-        if user and user.is_director:
-            queryset = Group.objects.filter(Q(created_by__created_by=user)| Q(created_by=user))
-        elif user and user.is_admin:
-            queryset = Group.objects.filter(Q(created_by=user.created_by)|Q(created_by=user))
-        elif user and user.is_superuser:
+    def get_queryset(self, user=None, month=None, year=None):
+        if not user:
+            return []
+        if user.is_director:
+            queryset = Group.objects.filter(created_by=user, month=month, year=year)
+        else:
             queryset = Group.objects.all()
-        return queryset.all()
+        return queryset
 
     def get(self, request):
-        queryset = self.get_queryset(user=request.user)
-        serializer = self.serializer_class(queryset, many=True)
-        return Response(serializer.data, status=200)
+        now = timezone.now()
+        month = request.query_params.get("month", now.month)
+        year = request.query_params.get("year", now.year)
+        user = request.user
+        if user.is_admin:
+            user = user.created_by  # getting groups by director is easier one.
+        queryset = self.get_queryset(user=user, month=month, year=year)
+        serializer = self.serializer_class(queryset, many=True).data
+        mpayment = MonthlyPayments.objects.filter(month=month, year=year, created_by=user)
+        data = {}
+        if mpayment.count()>0:
+            mpayment = mpayment.first()
+            print(mpayment.paid)
+            data = {
+                "groups":serializer,
+                "paid": mpayment.paid,
+                "must_paid":mpayment.must_paid,
+                "pupils": mpayment.pupils
+            }
+        
+        return Response(data, status=200)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data, context={"request":request})
@@ -58,7 +86,7 @@ class GroupDetailAPIView(APIView):
         lessons_count: int
     """
 
-    serializer_class = GroupSerializer
+    serializer_class = GroupDetailSerializer
     queryset = Group.objects.all()
 
     def get(self, request, pk):

@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-
+ 
 #local imports
 from .views import (
     GroupAPIView,
