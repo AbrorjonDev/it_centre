@@ -56,3 +56,13 @@ class MonthlyPayments(BaseModel):
 
     def __str__(self):
         return self.created_by.username
+
+class HistoryMessages(BaseModel):
+    text = models.TextField(null=True, blank=True)
+    payment = models.ForeignKey(GroupPayments, on_delete=models.SET_NULL, null=True)
+    # created_by --> is admin created by director
+    modified_by = None
+
+    def __str__(self):
+        return self.text
+         

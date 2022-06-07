@@ -10,7 +10,7 @@ from apps.users.serializers import UserSerializer
 class GroupPaymentsSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(required=False, many=False)
     modified_by = UserSerializer(required=False, many=False)
-    
+    deadline = serializers.BooleanField(default=False, required=False)
     class Meta:
         model = GroupPayments
         fields = "__all__"
@@ -34,7 +34,7 @@ class GroupSerializer(serializers.ModelSerializer):
             "created_by", 
             "modified_by",
             "date_created",
-            "date_modified"
+            "date_modified",
             )
 
     def create(self, attrs):
@@ -81,7 +81,7 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
             "lessons_count",
             "group"
             )
-        
+
     def create(self, attrs):
         try:
             payment = GroupPayments.objects.get(**attrs)

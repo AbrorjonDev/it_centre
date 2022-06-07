@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.shortcuts import render, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -92,6 +93,13 @@ class GroupDetailAPIView(APIView):
     def get(self, request, pk):
         group = get_object_or_404(Group, pk=pk)
         serializer = self.serializer_class(group,many=False)
+        for payment in serializer.data.get("payments", []):
+            payment_date = payment.get("payment_date", None)
+            if payment_date:
+                now = timezone.now()
+                dt = datetime.strptime(payment_date, "%Y-%m-%d").date()
+                if dt.year <= now.year and dt.month <= now.month:
+                    payment["deadline"] = True if dt.day <= now.day else False           
         return Response(serializer.data, status=200)
 
     def patch(self, request, pk):
