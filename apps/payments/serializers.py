@@ -102,8 +102,10 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
     def update(self, instance, attrs):
         instance.full_name = attrs.get("full_name", instance.full_name)
         instance.payment_amount = attrs.get("payment_amount", instance.payment_amount)
-        instance.paid_admin = attrs.get("paid_admin", instance.paid_admin)
-        instance.paid_director = attrs.get("paid_director", instance.paid_director)
+        if self.context['request'].user.is_admin:
+            instance.paid_admin = attrs.get("paid_admin", instance.paid_admin)
+        elif self.context['request'].user.is_director:
+            instance.paid_director = attrs.get("paid_director", instance.paid_director)
         instance.payment_date = attrs.get("payment_date", instance.payment_date)
         instance.lessons_count = attrs.get("lessons_count", instance.lessons_count)
         instance.group = attrs.get("group", instance.group)

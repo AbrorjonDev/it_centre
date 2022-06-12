@@ -1,6 +1,9 @@
 from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.db.models import Q
+from django.forms import ValidationError
+from django.shortcuts import get_object_or_404
+
 #local imports
 from .models import Group, GroupPayments, MonthlyPayments
 
@@ -8,7 +11,7 @@ from .models import Group, GroupPayments, MonthlyPayments
 @receiver(post_save, sender=Group)
 def create_group_object_with_key(sender, instance, created, **kwargs):
     if created and instance.key==None:
-        instance.key = instance.name
+        instance.key = instance.name.replace(' ', '_')
         instance.save()
     return instance
 
@@ -39,7 +42,27 @@ def update_group_paid_amount(sender, instance,  created, **kwargs):
     group.save()
     return instance
 
-
+@receiver(pre_delete, sender=GroupPayments)
+def update_group_paid_amount_del(sender, instance, **kwargs):
+    if instance.paid_admin or instance.paid_director:
+        raise ValidationError('To`lov allaqachon amalga oshirilgan')
+    group = instance.group
+    if group is None:
+        return 
+    if instance.paid_admin or instance.paid_director:
+        group.paid = group.paid - instance.payment_amount
+    else:
+        group.must_paid = group.must_paid - instance.payment_amount
+    group.save()
+    
+    mpayment, created = MonthlyPayments.objects.get_or_create(
+            month=group.month,
+            year=group.year,
+            created_by=group.created_by
+        )
+    mpayment.pupils -= 1
+    mpayment.save()
+    return instance
 
 @receiver(post_save, sender=Group)
 def updating_monthlypayments_after_group_changing(sender, instance, created, **kwargs):

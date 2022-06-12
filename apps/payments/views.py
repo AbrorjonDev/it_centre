@@ -147,6 +147,7 @@ class GroupPaymentsDetailAPIView(APIView):
     """
 
     serializer_class = GroupPaymentsSerializer
+    post_serializer_class= GroupPaymentsPostSerializer
     queryset = None
 
     def get(self, request, pk):
@@ -156,7 +157,7 @@ class GroupPaymentsDetailAPIView(APIView):
     
     def patch(self, request, pk):
         payment = get_object_or_404(GroupPayments, pk=pk)
-        serializer = self.serializer_class(payment, data=request.data, context={"request":request})
+        serializer = self.post_serializer_class(payment, data=request.data, context={"request":request}, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=200)
@@ -165,7 +166,10 @@ class GroupPaymentsDetailAPIView(APIView):
     def delete(self, request, pk):
         payment = get_object_or_404(GroupPayments, pk=pk)
         if payment:
-            payment.delete()
+            try:
+                payment.delete()
+            except Exception as e: 
+                return Response({'detail': f'{e}'}, status=403)
             return Response({"detail":"deleted succesfully."}, status=200)
         return Response({"detail":"Not Found"}, status=404)
 
