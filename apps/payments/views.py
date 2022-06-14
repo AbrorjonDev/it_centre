@@ -79,6 +79,8 @@ class GroupAPIView(APIView):
 class GroupDetailAPIView(APIView):
     """
     Retrieving, Editing and Deleting group object.
+    in get method:
+        -payment field added.
 
     in PATCH:
         name: str,
@@ -99,7 +101,10 @@ class GroupDetailAPIView(APIView):
                 now = timezone.now()
                 dt = datetime.strptime(payment_date, "%Y-%m-%d").date()
                 if dt.year <= now.year and dt.month <= now.month:
-                    payment["deadline"] = True if dt.day <= now.day else False           
+                    if dt.day <= now.day:
+                        if not (payment['paid_admin'] or payment['paid_director']):
+                            payment["deadline"] = True
+                    
         return Response(serializer.data, status=200)
 
     def patch(self, request, pk):

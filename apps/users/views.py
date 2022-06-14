@@ -20,7 +20,7 @@ class LoginAPIView(APIView):
     Get token in here.
     In POST:
         username: str
-        password: str
+        password: BaseModelstr
     """
     queryset = None
     permission_classes = (AllowAny, )

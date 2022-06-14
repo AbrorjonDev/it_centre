@@ -11,6 +11,8 @@ class GroupPaymentsSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(required=False, many=False)
     modified_by = UserSerializer(required=False, many=False)
     deadline = serializers.BooleanField(default=False, required=False)
+    payment = serializers.FloatField(required=False, many=False)
+    
     class Meta:
         model = GroupPayments
         fields = "__all__"

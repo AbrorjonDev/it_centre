@@ -36,8 +36,8 @@ def update_group_paid_amount(sender, instance,  created, **kwargs):
     paid = payments.filter(Q(paid_admin=True)|Q(paid_director=True))
     must_paid = payments.filter(paid_admin=False, paid_director=False)
     
-    group.paid = sum([obj.payment_amount for obj in paid])
-    group.must_paid = sum([obj.payment_amount for obj in must_paid if obj.payment_amount])
+    group.paid = sum([obj.payment for obj in paid])
+    group.must_paid = sum([obj.payment for obj in must_paid if obj.payment_amount])
     group.modified_by = instance.modified_by
     group.save()
     return instance
@@ -50,9 +50,9 @@ def update_group_paid_amount_del(sender, instance, **kwargs):
     if group is None:
         return 
     if instance.paid_admin or instance.paid_director:
-        group.paid = group.paid - instance.payment_amount
+        group.paid -= instance.payment
     else:
-        group.must_paid = group.must_paid - instance.payment_amount
+        group.must_paid = group.must_paid - instance.payment
     group.save()
     
     mpayment, created = MonthlyPayments.objects.get_or_create(
