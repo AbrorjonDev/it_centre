@@ -19,6 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
         else:
             user = User(**attrs, is_admin=True, is_director=False)
         user.set_password(attrs.get("password"))
+        user.created_by = self.context["request"].user
         user.save()
         return user
     

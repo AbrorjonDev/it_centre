@@ -81,6 +81,8 @@ class UserAPIView(APIView, UserPassesTestMixin):
             return User.objects.all()
         elif user and user.is_director:
             return User.objects.filter(created_by=user)
+        elif user and user.is_admin:
+            return User.objects.filter(created_by=user.created_by)
 
     serializer_class = UserSerializer
 
