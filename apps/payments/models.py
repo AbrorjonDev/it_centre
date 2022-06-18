@@ -49,7 +49,7 @@ class GroupPayments(BaseModel):
     def payment(self):
         payment_percentage = 0
         if self.group.lessons_count > 0:
-            payment_percentage = self.lessons_count/self.group.lessons_count * 100
+            payment_percentage = self.lessons_count/self.group.lessons_count
         return self.payment_amount * payment_percentage 
 
 class MonthlyPayments(BaseModel):
@@ -61,7 +61,7 @@ class MonthlyPayments(BaseModel):
 
 
     def __str__(self):
-        return self.created_by.username
+        return self.created_by.username if self.created_by else f'{self.id}'
 
 class HistoryMessages(BaseModel):
     text = models.TextField(null=True, blank=True)
