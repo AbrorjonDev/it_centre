@@ -40,9 +40,9 @@ class GroupAPIView(APIView):
         if not user:
             return []
         if user.is_director:
-            queryset = Group.objects.filter(created_by=user, month=month, year=year)
+            queryset = Group.objects.filter(Q(created_by=user)|Q(created_by__created_by=user), month=month, year=year)
         else:
-            queryset = Group.objects.all()
+            queryset = Group.objects.filter(created_by=user, month=month, year=year)
         return queryset
 
     def get(self, request):
@@ -50,15 +50,27 @@ class GroupAPIView(APIView):
         month = request.query_params.get("month", now.month)
         year = request.query_params.get("year", now.year)
         user = request.user
-        if user.is_admin:
-            user = user.created_by  # getting groups by director is easier one.
         queryset = self.get_queryset(user=user, month=month, year=year)
         serializer = self.serializer_class(queryset, many=True).data
+        
         mpayment = MonthlyPayments.objects.filter(month=month, year=year, created_by=user)
         data = {}
-        if mpayment.count()>0:
+        if request.user.is_director:
+            mpayments = MonthlyPayments.objects.filter(Q(created_by=request.user)|Q(created_by__created_by=request.user), month=month, year=year)
+            paid = sum([obj.paid for obj in mpayments])
+            must_paid = sum([obj.must_paid for obj in  mpayments])
+            pupils = sum([obj.pupils for obj in mpayments])
+            mpayments_ser = MonthlyPaymentSerializer(mpayments, many=True).data
+            data = {
+                "groups": serializer,
+                "payments": mpayments_ser,
+                "paid": paid,
+                "must_paid": must_paid,
+                "pupils": pupils
+            }
+            
+        elif mpayment.count()>0:
             mpayment = mpayment.first()
-            print(mpayment.paid)
             data = {
                 "groups":serializer,
                 "paid": mpayment.paid,

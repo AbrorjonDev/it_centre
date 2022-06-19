@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -41,12 +42,12 @@ class GroupSerializer(serializers.ModelSerializer):
 
     def create(self, attrs):
         user = self.context["request"].user
-        if not user.is_director:
-            user = user.created_by 
-        if "month" not in attrs.keys():
-            attrs["month"] = timezone.now().month
-        if "year" not in attrs.keys():
-            attrs["year"] = timezone.now().year 
+        if attrs.get('month', None) is None:
+            attrs['month'] = timezone.now().month
+
+        if attrs.get('year', None) is None:            
+            attrs['year'] = timezone.now().year
+
         group = Group.objects.create(**attrs, created_by=user)
         return group
 
@@ -83,6 +84,10 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
             "lessons_count",
             "group"
             )
+    def validate(self, attrs):
+        if attrs["group"].created_by != self.context["request"].user or self.context["request"].user.is_director == False:
+            raise ValidationError('Forbidden!--- Bu guruh sizga tegishli emas!') 
+        return attrs
 
     def create(self, attrs):
         try:
@@ -96,7 +101,7 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
             attrs.pop("paid_admin")
         if "paid_director" in attrs.keys() and not self.context["request"].user.is_director:
             attrs.pop("paid_director")
-
+        
         student = GroupPayments.objects.create(**attrs, created_by=self.context["request"].user)
         student.save()
         return student
@@ -118,6 +123,9 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
 
 
 class MonthlyPaymentSerializer(serializers.ModelSerializer):
+    created_by = UserSerializer(many=False, required=False, read_only=True)
     class Meta:
         model = MonthlyPayments
-        fields = "__all__"
+        fields = (
+            "id", "paid", "must_paid", "pupils", "created_by"
+        )

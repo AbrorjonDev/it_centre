@@ -7,12 +7,12 @@ from base_model.models import BaseModel
  
 User = get_user_model()
 
- 
+
 class Group(BaseModel):
     name = models.CharField(max_length=100)
     cost = models.IntegerField(null=True, blank=True)
     key = models.CharField(max_length=100, null=True, blank=True)
-    lessons_count = models.IntegerField(null=True, blank=True, default=0)
+    lessons_count = models.IntegerField(null=True, blank=True, default=12)
     month = models.IntegerField(null=True, blank=True)
     year = models.IntegerField(null=True, blank=True)
     paid = models.IntegerField(null=True, blank=True)
@@ -48,7 +48,7 @@ class GroupPayments(BaseModel):
     @property
     def payment(self):
         payment_percentage = 0
-        if self.group.lessons_count > 0:
+        if self.group.lessons_count and self.group.lessons_count > 0:
             payment_percentage = self.lessons_count/self.group.lessons_count
         return self.payment_amount * payment_percentage 
 
