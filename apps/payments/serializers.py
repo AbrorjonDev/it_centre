@@ -85,7 +85,11 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
             "group"
             )
     def validate(self, attrs):
-        if ("group" in attrs.keys() and attrs["group"].created_by != self.context["request"].user) or self.context["request"].user.is_director == False or (self.instance and self.instance.group is not None and self.instance.group.created_by!=self.context['request'].user):
+        if "group" not in attrs.keys():
+            raise ValidationError('Bad Request! --- group tanlanmagan.')
+        if ((attrs["group"].created_by != self.context["request"].user) or
+            (attrs["group"].created_by != self.context["request"].user.created_by) or
+            (self.instance and self.instance.group is not None and self.instance.group.created_by!=(self.context['request'].user or self.context['request'].user.created_by))):
             raise ValidationError('Forbidden!--- Bu guruh sizga tegishli emas!') 
         return attrs
 
