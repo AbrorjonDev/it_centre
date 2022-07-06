@@ -87,7 +87,7 @@ class GroupPaymentsPostSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
         instance = getattr(self, 'instance', None)
-        if instance.group is None and "group" not in attrs.keys():
+        if instance is not None and instance.group is None and "group" not in attrs.keys():
             raise ValidationError('Bad Request! --- group tanlanmagan.')
         if ((attrs["group"].created_by == self.context["request"].user) or
             (attrs["group"].created_by == self.context["request"].user.created_by) or

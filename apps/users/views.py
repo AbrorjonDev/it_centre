@@ -135,4 +135,4 @@ class UserDetailAPIView(APIView, UserPassesTestMixin):
         return Response({"detail":"Not found"}, status=400)
 
     def test_func(self):
-        return self.request.user.is_superuser or self.request.user.is_director
+        return self.request.user.is_superuser or self.request.user.is_director or self.object == self.request.user
